@@ -1,5 +1,103 @@
 # Changelog
 
+## [6.10.0] - 2026-09-02
+
+### Security
+
+- Updated the Windows Pixi environments to OpenSSL 3.6.4. [Humble, Jazzy]
+
+## [6.9.0] - 2026-09-01
+### Added
+- Added CI matrix coverage for every supported `build_ros.sh` ROS 2 and Ubuntu combination. [Humble, Jazzy]
+
+### Fixed
+- Installed CA certificates, modernized the ROS apt keyring setup, and included missing workspace dependencies in the Jazzy Docker images. [Jazzy]
+- Serialized Docker workspace source imports to avoid intermittent GitHub throttling in CI. [Humble, Jazzy]
+
+## [6.8.4] - 2026-08-27
+### Fixed
+- `carter_navigation`: Corrected the Humble SLAM launch argument Boolean so multi-robot navigation launches no longer fail during Nav2 Python expression evaluation. [Humble]
+
+## [6.8.3] - 2026-08-27
+### Fixed
+- `isaacsim_clearpath_nav2`: Added localization-only scan filtering so AMCL ignores severely incomplete lidar scans that can destabilize localization during in-place rotations. [Jazzy]
+
+## [6.8.2] - 2026-08-25
+### Fixed
+- `h1_fullbody_controller`: Removed the duplicate `use_sim_time` declaration that prevented the controller from starting. [Humble, Jazzy]
+
+## [6.8.1] - 2026-08-24
+### Changed
+- Bump versions to 6.1.0 [Humble, Jazzy]
+
+## [6.8.0] - 2026-08-24
+### Fixed
+- `isaacsim_bringup`: Isolated Isaac Sim child processes from Pixi and ROS activation paths while preserving unrelated user environment settings. [Humble, Jazzy]
+
+## [6.7.0] - 2026-08-22
+### Added
+- Added `pal_statistics`, `ros2_control`, and `ros2_control_cmake` as workspace submodules. [Jazzy]
+
+## [6.6.1] - 2026-08-17
+### Fixed
+- Navigation goals wait for Isaac Sim/Nav2. [Humble, Jazzy]
+
+## [6.6.0] - 2026-08-05
+### Changed
+- Removed the `standalone` Pixi task. Run standalone scripts with Isaac Sim's bundled Python launcher from a clean terminal to avoid exposing the Pixi dependency environment to Isaac Sim. [Humble, Jazzy]
+- `isaac_ros2_control_demo`: Installed `add_floor` as a ROS console script and removed redundant direct script installs. [Humble, Jazzy]
+- `isaac_ros2_control_demo`: Replaced stdout capture of `/robot_description` with a one-shot node and atomic parameter-file handoff so middleware logs cannot corrupt the URDF. [Humble, Jazzy]
+- `isaac_ros2_control_demo`: Wait indefinitely for `/robot_description`, reporting the wait every 60 seconds until the message arrives or the user presses `Ctrl+C`. [Humble, Jazzy]
+
+## [6.5.0] - 2026-08-04
+### Changed
+- `isaacsim_bringup`: Updated the default Isaac Sim launch version and package documentation links to 6.1.0. [Humble, Jazzy]
+
+### Fixed
+- `cmdvel_to_ackermann`: Restored reliable `cmd_vel` to `ackermann_cmd` conversion and publishing by using relative/configurable topics, stamping every published `AckermannDriveStamped` message, setting the default Ackermann frame ID, and using wheelbase for steering conversion. [Humble, Jazzy]
+
+## [6.4.1] - 2026-08-04
+- `isaac_ros2_control_demo`: Installed `read_robot_description` and `add_floor` as ROS console scripts so launch can discover their `.exe` wrappers on Windows, and enabled the floor collision node for Humble. [Humble, Jazzy]
+
+## [6.4.0] - 2026-07-29
+### Added
+- Added Greenwave Monitor as a workspace submodule with Pixi build dependencies and setup documentation. [Humble, Jazzy]
+
+## [6.3.0] - 2026-07-20
+### Added
+- `isaac_compressed_image_decoder`: auto-discovers `sensor_msgs/msg/CompressedImage` topics, decodes H.264 and HEVC/H.265 payloads based on the message `format`, and republishes `/topic/compressed` as `/topic` raw `sensor_msgs/Image` topics. Existing single-topic `input_topic`/`output_topic` parameters remain supported. [Humble, Jazzy]
+
+### Fixed
+- `isaac_ros2_control_demo`: Lowered the MoveIt floor collision surface by 5 cm to prevent the UR10 default pose from starting in collision. [Jazzy]
+
+## [6.2.0] - 2026-07-13
+### Added
+- `isaacsim_bringup`: Added `python_script` launch argument to run a user-provided Python script inside Isaac Sim
+  after startup in GUI/headless mode. [Humble, Jazzy]
+- `isaacsim_bringup`: Added an installed `add_cube_and_lights.py` sample startup script. [Humble, Jazzy]
+- Added the `isaac_ros2_control_demo` package for controlling a UR10 in Isaac Sim with MoveIt 2 and an in-process ROS 2 Controller Manager. [Humble, Jazzy]
+- Added a Pixi environment and lockfile for the Humble workspace. [Humble]
+- Added Linux AArch64 as a supported Pixi platform. [Humble, Jazzy]
+
+### Changed
+- Migrated all repository-owned ROS 2 launch files from Python to XML and updated their package metadata and documentation references. [Humble, Jazzy]
+- Added the RViz Visual Tools dependency to the Jazzy Pixi environment. [Jazzy]
+- Updated `.gitignore` to ignore Python bytecode, `__pycache__` directories, and editor backup files.
+
+### Fixed
+- `isaac_ros_navigation_goal`: Wait for Nav2 and localization readiness before sending goals, forward map configuration from integrated navigation launches, and use namespace-relative action and `initialpose` names for multi-robot launches. [Humble, Jazzy]
+- `isaac_ros_navigation_goal` and `cmdvel_to_ackermann`: Use the simulation clock for stamped navigation poses and Ackermann commands, with launch arguments for explicit clock selection. [Humble, Jazzy]
+- `isaac_ros_navigation_goal`: Preserve the initial pose as a typed floating-point array when passed through the XML launch frontend. [Humble, Jazzy]
+- `carter_navigation`: Forward `use_sim_time` to the point-cloud-to-laser-scan node. [Humble, Jazzy]
+- Navigation launches: Forward `use_sim_time` to Jazzy RViz instances and Nova Carter's robot-state publisher. [Humble, Jazzy where applicable]
+
+## [6.1.1] - 2026-07-02
+### Added
+- Added repo-level Python/C++ formatter tooling using isort, Black, and clang-format.
+
+### Changed
+- Updated MoveIt-related submodules with formatting-only changes: `moveit_resources` [Humble, Jazzy] and `topic_based_ros2_control` [Jazzy].
+
 ## [6.1.0] - 2026-06-23
 ### Changed
 - Bumped versions for Isaac Sim pip dependency to 6.0.1.0.

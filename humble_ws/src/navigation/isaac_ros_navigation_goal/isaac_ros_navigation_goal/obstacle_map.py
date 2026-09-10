@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 import numpy as np
 import yaml
-import os
-import math
 from PIL import Image
 
 
@@ -30,7 +30,7 @@ class GridMap:
     def __get_meta_from_yaml(self, yaml_file_path):
         """
         Reads map meta from the yaml file.
-        
+
         Parameters
         ----------
         yaml_file_path: path of the yaml file.
@@ -77,7 +77,7 @@ class GridMap:
     def get_range(self):
         """
         Returns the bounds of pose values in x & y direction.\n
-        
+
         Returns
         -------
         [List]:\n
@@ -107,8 +107,8 @@ class GridMap:
         """
 
         p_x, p_y = point
-        i_x = math.floor((p_x - self.__map_meta["origin"][0]) / self.__map_meta["resolution"])
-        i_y = math.floor((p_y - self.__map_meta["origin"][1]) / self.__map_meta["resolution"])
+        i_x = int(np.floor((p_x - self.__map_meta["origin"][0]) / self.__map_meta["resolution"]))
+        i_y = int(np.floor((p_y - self.__map_meta["origin"][1]) / self.__map_meta["resolution"]))
 
         # because origin in yaml is at bottom left of image
         i_y = self.__grid_map.shape[0] - i_y
@@ -126,7 +126,7 @@ class GridMap:
         -------
         [Integer]: number of pixel which represent the same distance.
         """
-        return math.ceil(distance / self.__map_meta["resolution"])
+        return int(np.ceil(distance / self.__map_meta["resolution"]))
 
     def __is_obstacle_in_distance(self, img_point, distance):
         """

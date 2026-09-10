@@ -1,11 +1,11 @@
 amcl:
   ros__parameters:
     use_sim_time: True
-    alpha1: 0.2
-    alpha2: 0.2
-    alpha3: 0.2
-    alpha4: 0.2
-    alpha5: 0.2
+    alpha1: 0.01
+    alpha2: 0.01
+    alpha3: 0.01
+    alpha4: 0.01
+    alpha5: 0.01
     base_frame_id: "base_link"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
@@ -37,7 +37,7 @@ amcl:
     z_max: 0.05
     z_rand: 0.5
     z_short: 0.05
-    scan_topic: sim_lidar/scan
+    scan_topic: sim_lidar/scan_localization
     map_topic: map
     set_initial_pose: false
     always_reset_initial_pose: false
@@ -164,8 +164,9 @@ controller_server:
 
     # Progress checker parameters
     progress_checker:
-      plugin: "nav2_controller::SimpleProgressChecker"
+      plugin: "nav2_controller::PoseProgressChecker"
       required_movement_radius: 0.5
+      required_movement_angle: 0.25
       movement_time_allowance: 10.0
     # Goal checker parameters
     #precise_goal_checker:
@@ -176,8 +177,8 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.35
+      yaw_goal_tolerance: 0.5
   # DWB parameters
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
@@ -203,7 +204,7 @@ controller_server:
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
-      xy_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.35
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
@@ -253,7 +254,7 @@ local_costmap:
         enabled: True
         observation_sources: scan
         scan:
-          topic: sim_lidar/scan
+          topic: $(var scan_topic)
           max_obstacle_height: 2.0
           clearing: True
           marking: True
@@ -281,7 +282,7 @@ global_costmap:
         enabled: True
         observation_sources: scan
         scan:
-          topic: sim_lidar/scan
+          topic: $(var scan_topic)
           max_obstacle_height: 2.0
           clearing: True
           marking: True
@@ -332,7 +333,7 @@ collision_monitor:
     observation_sources: ["scan"]
     scan:
       type: "scan"
-      topic: "sim_lidar/scan"
+      topic: $(var scan_topic)
       min_height: 0.15
       max_height: 2.0
       enabled: True
@@ -412,4 +413,3 @@ waypoint_follower:
       plugin: "nav2_waypoint_follower::WaitAtWaypoint"
       enabled: True
       waypoint_pause_duration: 200
-
