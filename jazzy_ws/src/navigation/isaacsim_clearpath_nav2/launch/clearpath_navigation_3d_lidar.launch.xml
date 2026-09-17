@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!--
+  SPDX-FileCopyrightText: Copyright (c) 2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+  Nav2 bringup for a Clearpath robot carrying a 3D LiDAR (e.g. Ouster OS0) in Isaac Sim.
+  - Costmaps and collision monitor consume the PointCloud2 directly.
+  - AMCL consumes a 2D LaserScan flattened from a height slice of the point cloud.
+-->
+<launch>
+  <arg name="setup_path"
+       default="$(find-pkg-share isaacsim_clearpath_nav2)/params/dd100"
+       description="Path to clearpath-generated description directory (must contain robot.urdf.xacro from generate_description)"/>
+  <arg name="namespace" default="" description="Robot namespace"/>
+  <arg name="map" description="Full path to the occupancy-map yaml file"/>
+  <arg name="params_file"
+       default="$(var setup_path)/nav2_3d_lidar.yaml"
+       description="Full path to the Nav2 parameters file"/>
+  <arg name="use_sim_time" default="true"
+       description="Use simulation (Omniverse Isaac Sim) clock if true"/>
+  <arg name="localization_scan_minimum_ranges" default="100"
+       description="Minimum valid ranges required to pass a lidar scan to localization"/>
+  <arg name="scan_target_frame" default="base_link"
+       description="Frame the point cloud is flattened into; slice heights are measured in this frame"/>
+  <arg name="scan_min_height" default="0.15"
+       description="Lowest point (m, in scan_target_frame) used for the localization scan"/>
+  <arg name="scan_max_height" default="1.5"
+       description="Highest point (m, in scan_target_frame) used for the localization scan"/>
+  <arg name="scan_range_min" default="0.3" description="Minimum range (m) of the flattened scan"/>
+  <arg name="scan_range_max" default="50.0" description="Maximum range (m) of the flattened scan"/>
+
+  <let name="robot_description"
+       value="$(command '$(find-exec xacro) &quot;$(var setup_path)/robot.urdf.xacro&quot; is_sim:=true gazebo_controllers:=&quot;$(var setup_path)/platform/config/control.yaml&quot; namespace:=&quot;$(var namespace)&quot; use_fake_hardware:=true use_platform_controllers:=false use_manipulation_controllers:=false')"/>
+  <!-- Consumed by $(var ...) substitutions inside the params file -->
+  <let name="pointcloud_topic"
+       value="$(if $(eval &quot;'$(var namespace)' != ''&quot;) /$(var namespace)/sim_lidar/point_cloud /sim_lidar/point_cloud)"/>
+
+  <!-- 3D point cloud -> 2D scan for AMCL -->
+  <node pkg="pointcloud_to_laserscan" exec="pointcloud_to_laserscan_node"
+        name="pointcloud_to_laserscan" namespace="$(var namespace)" output="both">
+    <param name="use_sim_time" value="$(var use_sim_time)" type="bool"/>
+    <param name="target_frame" value="$(var scan_target_frame)" type="str"/>
+    <param name="transform_tolerance" value="0.05"/>
+    <param name="min_height" value="$(var scan_min_height)"/>
+    <param name="max_height" value="$(var scan_max_height)"/>
+    <param name="angle_min" value="-3.14159"/>
+    <param name="angle_max" value="3.14159"/>
+    <param name="angle_increment" value="0.0087"/>
+    <param name="scan_time" value="0.1"/>
+    <param name="range_min" value="$(var scan_range_min)"/>
+    <param name="range_max" value="$(var scan_range_max)"/>
+    <param name="use_inf" value="true"/>
+    <remap from="/tf" to="tf"/>
+    <remap from="/tf_static" to="tf_static"/>
+    <remap from="cloud_in" to="sim_lidar/point_cloud"/>
+    <remap from="scan" to="sim_lidar/scan_from_cloud"/>
+  </node>
+
+  <node pkg="isaacsim_clearpath_nav2" exec="localization_scan_filter"
+        namespace="$(var namespace)" output="both">
+    <param name="minimum_valid_ranges" value="$(var localization_scan_minimum_ranges)" type="int"/>
+    <remap from="scan" to="sim_lidar/scan_from_cloud"/>
+    <remap from="scan_filtered" to="sim_lidar/scan_localization"/>
+  </node>
+
+  <node pkg="robot_state_publisher" exec="robot_state_publisher"
+        namespace="$(var namespace)" output="both">
+    <param name="robot_description" value="$(var robot_description)" type="str"/>
+    <param name="use_sim_time" value="$(var use_sim_time)" type="bool"/>
+    <remap from="/tf" to="tf"/>
+    <remap from="/tf_static" to="tf_static"/>
+    <remap from="joint_states" to="platform/joint_states"/>
+  </node>
+
+  <include file="$(find-pkg-share nav2_bringup)/launch/rviz_launch.py">
+    <arg name="namespace" value="$(var namespace)"/>
+    <arg name="use_namespace" value="true"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="rviz_config"
+         value="$(find-pkg-share isaacsim_clearpath_nav2)/params/rviz2/isaacsim_clearpath_nav2_namespaced.rviz"/>
+  </include>
+
+  <include file="$(find-pkg-share nav2_bringup)/launch/bringup_launch.py">
+    <arg name="map" value="$(var map)"/>
+    <arg name="namespace" value="$(var namespace)"/>
+    <arg name="use_namespace" value="true"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="params_file" value="$(var params_file)"/>
+  </include>
+</launch>
