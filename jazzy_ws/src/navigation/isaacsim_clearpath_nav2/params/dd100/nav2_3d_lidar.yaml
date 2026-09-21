@@ -32,14 +32,18 @@ amcl:
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: true
-    transform_tolerance: 1.0
+    # AMCL re-broadcasts map->odom on each scan, valid for transform_tolerance.
+    # The flattened scan inherits the RTX lidar's jitter (gaps measured up to ~1 s),
+    # so 1.0 left map->odom expiring between scans and the controller aborted with
+    # "Unable to transform robot pose into global plan's frame".
+    transform_tolerance: 2.0
     update_min_a: 0.2
     update_min_d: 0.25
     z_hit: 0.5
     z_max: 0.05
     z_rand: 0.5
     z_short: 0.05
-    scan_topic: sim_lidar/scan_localization
+    scan_topic: OS0/scan_localization
     map_topic: map
     set_initial_pose: false
     always_reset_initial_pose: false
@@ -239,7 +243,7 @@ local_costmap:
       transform_tolerance: 0.3
       footprint: "[ [0.14, 0.25], [0.14, -0.25], [-0.607, -0.25], [-0.607, 0.25] ]"
       always_send_full_costmap: True
-      plugins: ["sim_lidar", "inflation_layer", "static_map_layer"]
+      plugins: ["os0_voxel_layer", "inflation_layer", "static_map_layer"]
       static_map_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -252,11 +256,11 @@ local_costmap:
 
       # 3D voxel grid fed directly by the Ouster OS0 point cloud, so obstacles at
       # any height between min/max_obstacle_height are marked and cleared in 3D.
-      sim_lidar:
+      os0_voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
         footprint_clearing_enabled: True
-        publish_voxel_map: False
+        publish_voxel_map: True
         origin_z: 0.0
         z_resolution: 0.125
         z_voxels: 16          # 16 * 0.125 = 2.0 m (16 is the maximum)
@@ -334,7 +338,10 @@ collision_monitor:
     cmd_vel_out_topic: "cmd_vel"
     state_topic: "collision_monitor_state"
     transform_tolerance: 0.2
-    source_timeout: 1.0
+    # Isaac Sim's RTX lidar delivers clouds at ~5 Hz with gaps up to ~1 s, and the
+    # render pipeline can stall for much longer. At 1.0 s the monitor declares the
+    # source invalid and hard-stops the robot on every hiccup.
+    source_timeout: 3.0
     base_shift_correction: True
     stop_pub_timeout: 2.0
     # Polygons represent zone around the robot for "stop", "slowdown" and "limit" action types,
@@ -349,12 +356,26 @@ collision_monitor:
       min_points: 6000000000
       visualize: False
       enabled: True
-    observation_sources: ["pointcloud"]
-    pointcloud:
-      type: "pointcloud"
-      topic: $(var pointcloud_topic)
-      min_height: 0.15
-      max_height: 2.0
+    # The monitor is fed the FLATTENED SCAN, not the raw point cloud. Two reasons:
+    #
+    # 1. Delivery. Isaac Sim's OS0 cloud is ~112k points / 1.3 MB per message. That
+    #    fragments over UDP, and this node subscribes BEST_EFFORT, so a single lost
+    #    fragment discards the whole sample. Measured side by side against an
+    #    identical monitor fed the scan: point cloud 0 Hz, scan 17.2 Hz. When no
+    #    cloud ever arrives the source returns "no data" WITHOUT logging anything,
+    #    and the monitor stops the robot silently and permanently.
+    # 2. The (0,0,0) no-return points that Isaac's RTX lidar emits land exactly at
+    #    the sensor origin, inside the footprint. pointcloud_to_laserscan already
+    #    drops them via range_min, so the height band no longer has to dodge the
+    #    lidar's mount height, and remounting the sensor can't re-break this.
+    #
+    # The scan's vertical slice is set by scan_min_height/scan_max_height in the
+    # launch file (0.15-1.5 m), which is a wider band than the cloud version could
+    # safely use. The costmaps still consume the full 3D cloud for planning.
+    observation_sources: ["scan"]
+    scan:
+      type: "scan"
+      topic: $(var collision_scan_topic)
       enabled: True
 
 map_server:

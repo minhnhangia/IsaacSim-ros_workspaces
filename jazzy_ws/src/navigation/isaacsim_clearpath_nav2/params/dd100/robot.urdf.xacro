@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="dd100-0000">
+
+  <!-- Common -->
+  <xacro:include filename="$(find clearpath_platform_description)/urdf/common.urdf.xacro"/>
+
+  <!-- Platform -->
+  <xacro:include filename="$(find clearpath_platform_description)/urdf/dd100/dd100.urdf.xacro"/>
+  <xacro:dd100 control="diff_fwd" front_wheels="indoor" rear_wheels="caster"/>
+
+
+  <!-- Attachments -->
+
+
+  <!-- Links -->
+
+
+  <!-- Mounts -->
+
+
+  <!-- Sensors -->
+
+
+  <!-- Manipulators -->
+
+
+  <!-- Extras -->
+
+
+</robot>
