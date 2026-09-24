@@ -1,0 +1,258 @@
+#usda 1.0
+(
+    customLayerData = {
+        string creator = "URDF USD Converter v0.3.2"
+    }
+    endTimeCode = 1000000
+    kilogramsPerUnit = 1
+    metersPerUnit = 1
+    startTimeCode = 0
+    upAxis = "Z"
+)
+
+def Scope "Instances"
+{
+    def Xform "tn__DingoTopLevelDiff013_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff013_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff013_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff013_vK9FGVAm0/VisualMaterials/Material>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "tn__DingoTopLevelDiff032_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff032_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff032_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff032_vK9FGVAm0/VisualMaterials/Material>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "tn__DingoTopLevelDiff033_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff033_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff033_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff033_vK9FGVAm0/VisualMaterials/Material>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "tn__DingoTopLevelDiff034_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff034_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff034_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff034_vK9FGVAm0/VisualMaterials/Material>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "tn__DingoTopLevelDiff091_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff091_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff091_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff091_vK9FGVAm0/VisualMaterials/Material>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "tn__DingoTopLevelDiff094_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff094_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff094_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff094_vK9FGVAm0/VisualMaterials/Material_001>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material_001" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material_001>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "tn__DingoTopLevelDiff095_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff095_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff095_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff095_vK9FGVAm0/VisualMaterials/Material>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "tn__DingoTopLevelDiff098_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff098_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff098_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff098_vK9FGVAm0/VisualMaterials/Material_003>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material_003" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material_003>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "tn__DingoTopLevelDiff100_vK9FGVAm0" (
+        prepend references = @./geometries.usd@</Geometries/tn__DingoTopLevelDiff100_vK9FGVAm0>
+    )
+    {
+        over "tn__DingoTopLevelDiff100_vK9FGVAm0" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/tn__DingoTopLevelDiff100_vK9FGVAm0/VisualMaterials/Material_002>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "Material_002" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/Material_002>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "indoor" (
+        prepend references = @./geometries.usd@</Geometries/indoor>
+    )
+    {
+        over "indoor" (
+            apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            custom rel material:binding
+            prepend rel material:binding = </Instances/indoor/VisualMaterials/clearpath_black>
+        }
+
+        def Scope "VisualMaterials"
+        {
+            def Material "clearpath_black" (
+                instanceable = true
+                prepend references = @./materials.usda@</Materials/clearpath_black>
+            )
+            {
+            }
+        }
+    }
+
+    def Xform "chassis_collision" (
+        prepend references = @./geometries.usd@</Geometries/chassis_collision>
+    )
+    {
+        over "chassis_collision" (
+            apiSchemas = ["PhysicsCollisionAPI", "NewtonCollisionAPI", "PhysicsMeshCollisionAPI", "NewtonMeshCollisionAPI"]
+        )
+        {
+            token physics:approximation = "convexHull"
+            token purpose = "guide"
+        }
+    }
+}
+

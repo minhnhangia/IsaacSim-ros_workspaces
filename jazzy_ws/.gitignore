@@ -1,3 +1,12 @@
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# Isaac Sim scenes: track our own scenes, maps and the imported robot.
+# NVIDIA's asset pack (1.1 GB) is downloadable and not our work.
+scenes/Simple_Warehouse/
+scenes/**/.thumbs/
+# Ad-hoc backups: git history replaces these
+scenes/*_bk_*
+scenes/*_broken.usd
+scenes/.pre_tmpfix_backup/

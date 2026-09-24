@@ -1,0 +1,6 @@
+image: dd100_office_navigation.png
+resolution: 0.05
+origin: [-28.075000381469728, -34.675000762939455, 0.0000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
