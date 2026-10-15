@@ -4,9 +4,12 @@ project(isaacsim_spot_nav2)
 find_package(ament_cmake REQUIRED)
 
 install(DIRECTORY launch params isaac
-  DESTINATION share/${PROJECT_NAME})
+  DESTINATION share/${PROJECT_NAME}
+  PATTERN "__pycache__" EXCLUDE)
 
-install(PROGRAMS scripts/cloud_relay.py
-  DESTINATION lib/${PROJECT_NAME})
+if(BUILD_TESTING)
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(spot_sim_unit_tests test)
+endif()
 
 ament_package()

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
   Nav2 for Spot in Isaac Sim. Start the simulator first (spot_sim.launch.xml or spot_ros2_sim.py).
-  - Costmaps consume the OS0 point cloud directly (or through cloud_relay.py, see cloud_relay).
+  - Costmaps consume the OS0 point cloud directly.
   - AMCL and the collision monitor consume a 2D scan flattened from it.
   - TF and odometry come from the simulator; there is no robot_state_publisher.
 -->
@@ -23,23 +23,10 @@
   <arg name="scan_max_height" default="1.5"/>
   <arg name="localization_scan_minimum_ranges" default="100"/>
 
-  <!-- Nav2 consumes the OS0 cloud as published. spot_sim.launch.xml gives the simulator a FastDDS
-       profile so the costmaps' best-effort subscriptions receive whole clouds (params/fastdds_large_messages.xml).
-       cloud_relay:=true instead feeds Nav2 through scripts/cloud_relay.py (reliable subscription,
-       voxel-thinned): use it when Nav2 runs on another machine or the simulator lacks that profile. -->
-  <arg name="cloud_relay" default="false"/>
-  <arg name="nav_cloud_voxel" default="0.10" description="Voxel size (m) of the relayed cloud"/>
-  <let name="pointcloud_topic" value="/$(var namespace)/$(var lidar_name)/point_cloud" unless="$(var cloud_relay)"/>
-  <let name="pointcloud_topic" value="/$(var namespace)/$(var lidar_name)/points_nav" if="$(var cloud_relay)"/>
+  <!-- Costmaps read the raw cloud best-effort; spot_sim.launch.xml gives the simulator a FastDDS
+       profile so whole clouds get through (params/fastdds_large_messages.xml) -->
+  <let name="pointcloud_topic" value="/$(var namespace)/$(var lidar_name)/point_cloud"/>
   <let name="collision_scan_topic" value="/$(var namespace)/$(var lidar_name)/scan_from_cloud"/>
-
-  <node pkg="isaacsim_spot_nav2" exec="cloud_relay.py" name="cloud_relay" namespace="$(var namespace)" output="both"
-        if="$(var cloud_relay)">
-    <param name="use_sim_time" value="$(var use_sim_time)" type="bool"/>
-    <param name="voxel_size" value="$(var nav_cloud_voxel)"/>
-    <remap from="cloud_in" to="$(var lidar_name)/point_cloud"/>
-    <remap from="cloud_out" to="$(var lidar_name)/points_nav"/>
-  </node>
 
   <!-- 3D point cloud -> 2D scan, sliced by height above the floor (base_footprint is on the floor) -->
   <node pkg="pointcloud_to_laserscan" exec="pointcloud_to_laserscan_node"

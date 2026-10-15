@@ -9,8 +9,8 @@
 
   Only the publisher needs it (measured: on the simulator alone, 100% of 1.3 MB clouds arrived
   best-effort; on the subscriber alone, no change). Shared memory works between processes on the
-  same machine; across a network the UDP buffers below help, but a reliable relay
-  (cloud_relay:=true in spot_navigation.launch.xml) or rmw_zenoh is the dependable option there.
+  same machine; if Nav2 runs on another machine, the UDP buffers below help but are not enough
+  for best-effort clouds (consider rmw_zenoh there).
 -->
 <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
   <transport_descriptors>
