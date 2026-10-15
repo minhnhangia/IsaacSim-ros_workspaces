@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FastDDS profile for the Isaac Sim process (spot_sim.launch.xml sets FASTRTPS_DEFAULT_PROFILES_FILE).
+
+  With FastDDS's defaults a large message (a 0.6-1.3 MB PointCloud2) is split into many fragments,
+  and a best-effort subscriber drops the whole message when any fragment is lost. Nav2's costmap
+  layers subscribe best-effort, so they lost 20-60% of OS0 clouds on one machine (measured), and
+  more when the system was busy. A large shared-memory segment carries each cloud whole.
+
+  Only the publisher needs it (measured: on the simulator alone, 100% of 1.3 MB clouds arrived
+  best-effort; on the subscriber alone, no change). Shared memory works between processes on the
+  same machine; across a network the UDP buffers below help, but a reliable relay
+  (cloud_relay:=true in spot_navigation.launch.xml) or rmw_zenoh is the dependable option there.
+-->
+<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <transport_descriptors>
+    <transport_descriptor>
+      <transport_id>shm_large</transport_id>
+      <type>SHM</type>
+      <segment_size>33554432</segment_size>
+      <maxMessageSize>4194304</maxMessageSize>
+    </transport_descriptor>
+    <transport_descriptor>
+      <transport_id>udp_large</transport_id>
+      <type>UDPv4</type>
+      <sendBufferSize>4194304</sendBufferSize>
+      <receiveBufferSize>4194304</receiveBufferSize>
+    </transport_descriptor>
+  </transport_descriptors>
+  <participant profile_name="large_messages" is_default_profile="true">
+    <rtps>
+      <userTransports>
+        <transport_id>shm_large</transport_id>
+        <transport_id>udp_large</transport_id>
+      </userTransports>
+      <useBuiltinTransports>false</useBuiltinTransports>
+    </rtps>
+  </participant>
+</profiles>

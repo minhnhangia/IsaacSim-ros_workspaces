@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!--
+  Nav2 for Spot in Isaac Sim. Start the simulator first (spot_sim.launch.xml or spot_ros2_sim.py).
+  - Costmaps consume the OS0 point cloud directly (or through cloud_relay.py, see cloud_relay).
+  - AMCL and the collision monitor consume a 2D scan flattened from it.
+  - TF and odometry come from the simulator; there is no robot_state_publisher.
+-->
+<launch>
+  <arg name="namespace" default="spot" description="Robot namespace (must match the simulator's --namespace)"/>
+  <arg name="map" description="Full path to the occupancy-map yaml file"/>
+  <arg name="params_file" default="$(find-pkg-share isaacsim_spot_nav2)/params/spot_nav2.yaml"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="rviz" default="true"/>
+  <arg name="initial_x" default="0.0" description="AMCL initial pose (map frame); the sim spawns at 0,0,0 by default"/>
+  <arg name="initial_y" default="0.0"/>
+  <arg name="initial_yaw" default="0.0" description="radians"/>
+  <arg name="lidar_name" default="OS0"/>
+  <!-- Self-filters, measured: Spot's own back/hips appear up to 0.52 m horizontally from the body
+       centre and 0.60 m from the sensor. Anything closer than these is dropped. -->
+  <arg name="scan_range_min" default="0.6" description="Horizontal, from base_footprint (flattened scan, AMCL)"/>
+  <arg name="self_filter_range" default="0.7" description="3D distance from the OS0 (costmap layers)"/>
+  <arg name="scan_min_height" default="0.15" description="Scan slice, metres above the floor"/>
+  <arg name="scan_max_height" default="1.5"/>
+  <arg name="localization_scan_minimum_ranges" default="100"/>
+
+  <!-- Nav2 consumes the OS0 cloud as published. spot_sim.launch.xml gives the simulator a FastDDS
+       profile so the costmaps' best-effort subscriptions receive whole clouds (params/fastdds_large_messages.xml).
+       cloud_relay:=true instead feeds Nav2 through scripts/cloud_relay.py (reliable subscription,
+       voxel-thinned): use it when Nav2 runs on another machine or the simulator lacks that profile. -->
+  <arg name="cloud_relay" default="false"/>
+  <arg name="nav_cloud_voxel" default="0.10" description="Voxel size (m) of the relayed cloud"/>
+  <let name="pointcloud_topic" value="/$(var namespace)/$(var lidar_name)/point_cloud" unless="$(var cloud_relay)"/>
+  <let name="pointcloud_topic" value="/$(var namespace)/$(var lidar_name)/points_nav" if="$(var cloud_relay)"/>
+  <let name="collision_scan_topic" value="/$(var namespace)/$(var lidar_name)/scan_from_cloud"/>
+
+  <node pkg="isaacsim_spot_nav2" exec="cloud_relay.py" name="cloud_relay" namespace="$(var namespace)" output="both"
+        if="$(var cloud_relay)">
+    <param name="use_sim_time" value="$(var use_sim_time)" type="bool"/>
+    <param name="voxel_size" value="$(var nav_cloud_voxel)"/>
+    <remap from="cloud_in" to="$(var lidar_name)/point_cloud"/>
+    <remap from="cloud_out" to="$(var lidar_name)/points_nav"/>
+  </node>
+
+  <!-- 3D point cloud -> 2D scan, sliced by height above the floor (base_footprint is on the floor) -->
+  <node pkg="pointcloud_to_laserscan" exec="pointcloud_to_laserscan_node"
+        name="pointcloud_to_laserscan" namespace="$(var namespace)" output="both">
+    <param name="use_sim_time" value="$(var use_sim_time)" type="bool"/>
+    <param name="target_frame" value="base_footprint" type="str"/>
+    <param name="transform_tolerance" value="0.05"/>
+    <param name="min_height" value="$(var scan_min_height)"/>
+    <param name="max_height" value="$(var scan_max_height)"/>
+    <param name="angle_min" value="-3.14159"/>
+    <param name="angle_max" value="3.14159"/>
+    <param name="angle_increment" value="0.0087"/>
+    <param name="scan_time" value="0.1"/>
+    <param name="range_min" value="$(var scan_range_min)"/>
+    <param name="range_max" value="50.0"/>
+    <param name="use_inf" value="true"/>
+    <remap from="/tf" to="tf"/>
+    <remap from="/tf_static" to="tf_static"/>
+    <remap from="cloud_in" to="$(var pointcloud_topic)"/>
+    <remap from="scan" to="$(var lidar_name)/scan_from_cloud"/>
+  </node>
+
+  <node pkg="isaacsim_clearpath_nav2" exec="localization_scan_filter"
+        namespace="$(var namespace)" output="both">
+    <param name="minimum_valid_ranges" value="$(var localization_scan_minimum_ranges)" type="int"/>
+    <remap from="scan" to="$(var lidar_name)/scan_from_cloud"/>
+    <remap from="scan_filtered" to="$(var lidar_name)/scan_localization"/>
+  </node>
+
+  <include file="$(find-pkg-share nav2_bringup)/launch/rviz_launch.py" if="$(var rviz)">
+    <arg name="namespace" value="$(var namespace)"/>
+    <arg name="use_namespace" value="true"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+  </include>
+
+  <include file="$(find-pkg-share nav2_bringup)/launch/bringup_launch.py">
+    <arg name="map" value="$(var map)"/>
+    <arg name="namespace" value="$(var namespace)"/>
+    <arg name="use_namespace" value="true"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="params_file" value="$(var params_file)"/>
+  </include>
+</launch>
