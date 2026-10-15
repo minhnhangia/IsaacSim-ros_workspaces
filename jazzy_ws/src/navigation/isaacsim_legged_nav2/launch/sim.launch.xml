@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!-- Starts a legged robot in Isaac Sim (standalone app). Pass other simulator options through
+     sim_args, for example a headless run spawned at x=2, y=0 facing 90 degrees without cameras.
+     Run legged_ros2_sim.py with the help flag (via Isaac's python.sh) for every option. -->
+<launch>
+  <arg name="robot" default="spot" description="spot (flat ground) or anymal_d (also stairs)"/>
+  <arg name="isaac_sim_python" default="$(env HOME)/isaacsim/python.sh"/>
+  <arg name="sim_args" default="" description="Options for legged_ros2_sim.py, e.g. '--headless --spawn 2 0 90 --no-camera'"/>
+  <!-- Lets best-effort subscribers (Nav2's costmaps) receive whole point clouds; see the file.
+       Set to an empty string to use FastDDS's defaults. -->
+  <arg name="fastdds_profile" default="$(find-pkg-share isaacsim_legged_nav2)/params/fastdds_large_messages.xml"/>
+  <set_env name="FASTRTPS_DEFAULT_PROFILES_FILE" value="$(var fastdds_profile)"/>
+  <executable cmd="$(var isaac_sim_python) $(find-pkg-share isaacsim_legged_nav2)/isaac/legged_ros2_sim.py --robot $(var robot) $(var sim_args)"
+              output="screen"/>
+</launch>

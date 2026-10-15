@@ -1,0 +1,21 @@
+# Robot-specific Nav2 values, selected by navigation.launch.py robot:=<name>.
+#
+# footprint: polygon in base_footprint (x forward, y left), legs included.
+# scan_range_min: self-filter for the flattened scan (AMCL, collision monitor): horizontal
+#   distance from base_footprint below which points are the robot itself.
+# self_filter_range: self-filter for the costmaps' voxel layers: 3D distance from the OS0.
+# Both self-filters were measured from the robot's own OS0 points (>0.15 m above the floor)
+# while walking, with the OS0 on its default 0.10 m mast.
+
+spot:
+  # 1.1 m x 0.5 m. Own points: up to 0.52 m horizontally, 0.60 m from the sensor.
+  footprint: "[[0.55, 0.25], [0.55, -0.25], [-0.55, -0.25], [-0.55, 0.25]]"
+  scan_range_min: 0.6
+  self_filter_range: 0.7
+
+anymal_d:
+  # 1.1 m x 0.74 m (feet at +-0.51 m, +-0.34 m). Own points: body to 0.50 m, swinging legs to
+  # 0.72 m horizontally; 0.82 m (99.9th percentile), 0.92 m (max) from the sensor.
+  footprint: "[[0.55, 0.37], [0.55, -0.37], [-0.55, -0.37], [-0.55, 0.37]]"
+  scan_range_min: 0.75
+  self_filter_range: 0.9
