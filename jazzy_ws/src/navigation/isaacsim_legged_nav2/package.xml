@@ -18,6 +18,9 @@
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>nav2_regulated_pure_pursuit_controller</exec_depend>
   <exec_depend>pointcloud_to_laserscan</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
   <exec_depend>isaacsim_clearpath_nav2</exec_depend>  <!-- localization_scan_filter -->
 
   <test_depend>ament_cmake_pytest</test_depend>

@@ -11,6 +11,7 @@ from .base import CommandProfile, LeggedRobot
 
 class SpotRobot(LeggedRobot):
     name = "spot"
+    prim_path = "/World/Spot"
     body_prim = "/World/Spot/body"
     spawn_height = 0.5
     climbs_stairs = False  # flat-terrain policy: stalls at a 15 cm step and can flip over
@@ -31,7 +32,7 @@ class SpotRobot(LeggedRobot):
         self._fast_actuators_tried = False
 
     def spawn(self, x, y, yaw, floor_z):
-        self._runner = RobotPolicyRunner(self._spec, prim_path="/World/Spot", position=[x, y, floor_z + self.spawn_height],
+        self._runner = RobotPolicyRunner(self._spec, prim_path=self.prim_path, position=[x, y, floor_z + self.spawn_height],
                                          orientation=list(yaw_quat(yaw)))
         self._runner.spawn()
 

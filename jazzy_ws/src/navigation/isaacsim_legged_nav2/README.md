@@ -22,9 +22,15 @@ ros2 launch isaacsim_legged_nav2 navigation.launch.py robot:=anymal_d \
     map:=$HOME/IsaacSim-ros_workspaces/jazzy_ws/scenes/dd100_office_opened_navigation.yaml
 ```
 
-The robot spawns at (0, 0, 0°) in the office, where AMCL starts, so you can send a goal straight away.
-If you spawn elsewhere (`--spawn X Y YAW_DEG`), pass the same pose to the navigation launch
-(`initial_x`, `initial_y`, `initial_yaw` in radians). Both launches use `ROS_DOMAIN_ID` from the environment.
+The robot spawns at (0, 0, 0°) in the office; send a goal straight away. Both launches use
+`ROS_DOMAIN_ID` from the environment.
+
+**Localization** (`navigation.launch.py localization:=...`):
+
+| | |
+|---|---|
+| `ground_truth` (default) | `map -> odom` is identity: the simulator's odometry is exact and in world coordinates. Works on every floor of the building, from any spawn pose. |
+| `amcl` | AMCL against the map, which covers the main floor only. If you spawn elsewhere (`--spawn X Y YAW_DEG`), pass the same pose as `initial_x`, `initial_y`, `initial_yaw` (radians). |
 
 All simulator options: `~/isaacsim/python.sh isaac/legged_ros2_sim.py --help`. The most useful:
 
@@ -50,8 +56,10 @@ All simulator options: `~/isaacsim/python.sh isaac/legged_ros2_sim.py --help`. T
 | `front_stereo/{left,right}/image_raw`, `.../camera_info` | Image, CameraInfo | 640x480, 0.095 m baseline |
 | `front_stereo/depth/image_rect_raw` | Image 32FC1 | metres, aligned with the left camera |
 
-`odom` and `base_footprint` lie on the floor and `base_link` is the body, which bobs and tilts while
-walking, so every height Nav2 uses is measured from the floor.
+`odom` is the world frame. `base_footprint` is the body projected onto the floor directly below it
+(found by a raycast that ignores the robot), so it follows the robot from storey to storey, and
+`base_link` is the body, which bobs and tilts while walking. Every height Nav2 uses is measured from
+the floor the robot stands on.
 
 ## Robot-specific behaviour
 
@@ -129,11 +137,11 @@ Office scene, headless, through `sim.launch.xml` and `navigation.launch.py`, for
 
 | | Spot | ANYmal-D |
 |---|---|---|
-| Five-goal tour (~52 m, through doorways) | 5/5, mean 0.25 m and 18° from goals | 5/5 twice, mean 0.16-0.19 m and 8° from goals |
-| AMCL vs ground truth (mean / max) | - | 6.6 cm / 22 cm |
+| Five-goal tour (~52 m, through doorways), ground-truth localization | 5/5, mean 0.22 m and 16° from goals | 5/5, mean 0.17 m and 7° from goals |
+| Same tour with `localization:=amcl` | 5/5 (before the default changed) | 5/5, mean 0.15 m; AMCL within 6.6 cm of ground truth on average |
 | Unmapped 0.6 m box across the route, both directions | 2/2, 0.38 m clear | 2/2, 0.44 m clear |
 | Office stairwell over `cmd_vel` (floor to 1.80 m landing / back down) | not capable | 3/3 up, 3/3 down |
-| Main staircase down to the basement's mid-landing (-1.5 m) over `cmd_vel` | not capable | 1/1 |
+| Main staircase down to the basement's mid-landing (-1.5 m) over `cmd_vel`, with Nav2 running | not capable | 1/1: `map -> base_footprint` z followed 0.00, -0.44, -0.74, -1.49 m; `base_footprint -> base_link` stayed 0.51-0.65 m |
 
 Final position is measured against ground truth; the goal tolerance applies to AMCL's estimate.
 Final headings land near the yaw tolerance, because Regulated Pure Pursuit stops turning as soon as
@@ -144,9 +152,11 @@ is trained only on steps up to 0.12 m and never climbed the 0.15 m office steps)
 
 ## Limitations
 
-- **Nav2 does not plan across floors.** The 2D map is one height slice: stairs are free space, and the
-  flight down to the basement looks like floor. ANYmal-D can walk the stairs when commanded, but Nav2
-  has no notion of floors yet; keep Spot out of stairwells with a keepout zone.
+- **Nav2 does not plan across floors.** Localization holds on every floor (ground truth), but the map
+  server serves the main floor's map only: on another floor the global costmap and planner use the wrong
+  layout (the local costmap, built from the LiDAR, is still right). On the main floor's map the stairs
+  are free space and the flight down to the basement looks like floor; keep Spot out of stairwells
+  with a keepout zone.
 - **ANYmal-D's actuator network is ANYmal-C's** (NVIDIA publishes no ANYmal-D network); fine in
   simulation, a sim-to-real gap on hardware.
 - **Stairwells are narrow** (1.3 m in the office). ANYmal-D jammed against a wall when walked 0.15 m

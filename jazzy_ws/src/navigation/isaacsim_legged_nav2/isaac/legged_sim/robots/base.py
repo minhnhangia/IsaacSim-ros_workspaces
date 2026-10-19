@@ -28,6 +28,7 @@ class LeggedRobot(abc.ABC):
     """
 
     name: str
+    prim_path: str  # the robot's root prim
     body_prim: str  # the link published as base_link
     spawn_height: float  # body height above the floor at spawn
     control_dt: float  # policy period (one rendered frame)

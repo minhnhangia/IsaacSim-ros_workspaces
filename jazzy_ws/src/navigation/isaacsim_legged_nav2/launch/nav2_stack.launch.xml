@@ -3,12 +3,16 @@
   The Nav2 stack for a legged robot in Isaac Sim. Use navigation.launch.py, which fills in the
   robot-specific arguments from params/robot_profiles.yaml; start the simulator first (sim.launch.xml).
   - Costmaps consume the OS0 point cloud directly.
-  - AMCL and the collision monitor consume a 2D scan flattened from it.
+  - The collision monitor (and AMCL, if used) consume a 2D scan flattened from it.
   - TF and odometry come from the simulator; there is no robot_state_publisher.
+  - Localization: ground_truth (default) publishes map -> odom as identity, since the simulator's
+    odom is the world frame and its odometry is exact; it holds on every floor of the building.
+    amcl localizes against the map, which covers one floor only.
 -->
 <launch>
   <arg name="namespace" description="Robot namespace (the simulator's --namespace, default the robot name)"/>
   <arg name="map" description="Full path to the occupancy-map yaml file"/>
+  <arg name="localization" default="ground_truth" description="ground_truth or amcl"/>
   <arg name="params_file" default="$(find-pkg-share isaacsim_legged_nav2)/params/nav2.yaml"/>
   <arg name="use_sim_time" default="true"/>
   <arg name="rviz" default="true"/>
@@ -54,8 +58,10 @@
     <remap from="scan" to="$(var lidar_name)/scan_from_cloud"/>
   </node>
 
+  <let name="use_amcl" value="$(eval '&quot;$(var localization)&quot; == &quot;amcl&quot;')"/>
+
   <node pkg="isaacsim_clearpath_nav2" exec="localization_scan_filter"
-        namespace="$(var namespace)" output="both">
+        namespace="$(var namespace)" output="both" if="$(var use_amcl)">
     <param name="minimum_valid_ranges" value="$(var localization_scan_minimum_ranges)" type="int"/>
     <remap from="scan" to="$(var lidar_name)/scan_from_cloud"/>
     <remap from="scan_filtered" to="$(var lidar_name)/scan_localization"/>
@@ -73,5 +79,25 @@
     <arg name="use_namespace" value="true"/>
     <arg name="use_sim_time" value="$(var use_sim_time)"/>
     <arg name="params_file" value="$(var params_file)"/>
+    <arg name="use_localization" value="$(var use_amcl)"/>
   </include>
+
+  <!-- Ground-truth localization: identity map -> odom, and the map server on its own (bringup
+       starts it together with AMCL only) -->
+  <group unless="$(var use_amcl)">
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="map_to_odom" namespace="$(var namespace)"
+          args="--frame-id map --child-frame-id odom">
+      <remap from="/tf_static" to="tf_static"/>
+    </node>
+    <node pkg="nav2_map_server" exec="map_server" name="map_server" namespace="$(var namespace)" output="both">
+      <param name="use_sim_time" value="$(var use_sim_time)" type="bool"/>
+      <param name="yaml_filename" value="$(var map)"/>
+    </node>
+    <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_localization"
+          namespace="$(var namespace)" output="both">
+      <param name="use_sim_time" value="$(var use_sim_time)" type="bool"/>
+      <param name="autostart" value="true"/>
+      <param name="node_names" value="[map_server]"/>
+    </node>
+  </group>
 </launch>

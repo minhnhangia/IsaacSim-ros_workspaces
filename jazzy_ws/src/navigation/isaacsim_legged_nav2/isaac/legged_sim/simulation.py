@@ -18,6 +18,7 @@ from isaacsim.storage.native import get_assets_root_path
 from . import log
 from .commands import CommandFilter
 from .config import apply_robot_defaults
+from .floor_tracker import FloorTracker
 from .odometry import FloorOdometry
 from .robots import create_robot
 from .ros_graph import GraphConfig, RosGraph
@@ -57,7 +58,8 @@ class LeggedSimulation:
                                                          self.robot.camera_height, args.camera_rate)
         self.graph = RosGraph(GraphConfig(args.namespace, body, lidar, cameras, tuple(args.camera_resolution)))
 
-        self.odometry = FloorOdometry(*self.spawn, args.floor_z)
+        self.odometry = FloorOdometry()
+        self.floor = FloorTracker(self.robot.prim_path, args.floor_z)
         self.commands = CommandFilter.from_args(args)
         self.command = np.zeros(3, dtype=np.float32)
         self.pose = (self.spawn[0], self.spawn[1], args.floor_z + self.robot.spawn_height, self.spawn[2])  # x, y, z, yaw
@@ -74,7 +76,8 @@ class LeggedSimulation:
                 self._restart_policy = False
             else:
                 self.robot.step(step_dt, self.command)
-            sample = self.odometry.update(*self.robot.world_pose(), step_dt)
+            position, orientation = self.robot.world_pose()
+            sample = self.odometry.update(position, orientation, self.floor.update(*position), step_dt)
             self.graph.set_odometry(sample)
             self.pose = sample.world_pose
         except Exception as error:  # noqa: BLE001 - must not raise inside the physics callback

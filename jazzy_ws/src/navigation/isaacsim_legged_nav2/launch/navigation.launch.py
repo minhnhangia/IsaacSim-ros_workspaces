@@ -17,7 +17,7 @@ from launch.substitutions import LaunchConfiguration
 
 PACKAGE = "isaacsim_legged_nav2"
 TUNING = ("xy_goal_tolerance", "yaw_goal_tolerance", "min_approach_velocity", "rotate_to_heading_angular_vel")
-PASSED_THROUGH = ("map", "params_file", "use_sim_time", "rviz", "initial_x", "initial_y", "initial_yaw")
+PASSED_THROUGH = ("map", "localization", "params_file", "use_sim_time", "rviz", "initial_x", "initial_y", "initial_yaw")
 
 
 def load_profiles() -> dict:
@@ -46,6 +46,8 @@ def generate_launch_description():
                               description="Robot profile in params/robot_profiles.yaml"),
         DeclareLaunchArgument("namespace", default_value="", description="Default: the robot name"),
         DeclareLaunchArgument("map", description="Full path to the occupancy-map yaml file"),
+        DeclareLaunchArgument("localization", default_value="ground_truth", choices=["ground_truth", "amcl"],
+                              description="ground_truth: exact, on every floor; amcl: against the (one-floor) map"),
         DeclareLaunchArgument("params_file", default_value=os.path.join(get_package_share_directory(PACKAGE), "params", "nav2.yaml")),
         DeclareLaunchArgument("use_sim_time", default_value="true"),
         DeclareLaunchArgument("rviz", default_value="true"),

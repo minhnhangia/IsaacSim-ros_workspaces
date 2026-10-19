@@ -3,7 +3,7 @@
 
     sub  cmd_vel                              geometry_msgs/Twist
     pub  /clock                               rosgraph_msgs/Clock
-    pub  odom, tf                             odom -> base_footprint -> base_link (set from Python)
+    pub  odom, tf                             odom (= world) -> base_footprint -> base_link (set from Python)
     pub  tf_static                            base_link -> sensor frames
     pub  OS0/point_cloud                      sensor_msgs/PointCloud2
     pub  front_stereo/{left,right}/image_raw, front_stereo/{left,right}/camera_info,
@@ -85,11 +85,12 @@ class RosGraph:
         x, y, yaw = sample.footprint
         vx, vy, wz = sample.velocity
         footprint_rotation = to_og_quat(yaw_quat(yaw))
-        self._odom["position"].set([x, y, 0.0])
+        z = sample.footprint_height
+        self._odom["position"].set([x, y, z])
         self._odom["orientation"].set(footprint_rotation)
         self._odom["linearVelocity"].set([vx, vy, 0.0])
         self._odom["angularVelocity"].set([0.0, 0.0, wz])
-        self._tf_footprint["translation"].set([x, y, 0.0])
+        self._tf_footprint["translation"].set([x, y, z])
         self._tf_footprint["rotation"].set(footprint_rotation)
         self._tf_body["translation"].set([0.0, 0.0, sample.body_height])
         self._tf_body["rotation"].set(to_og_quat(sample.body_tilt))

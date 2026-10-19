@@ -46,6 +46,7 @@ def _quat_rotate_inverse(q, v) -> np.ndarray:
 
 class AnymalDRobot(LeggedRobot):
     name = "anymal_d"
+    prim_path = PRIM
     body_prim = f"{PRIM}/base"
     spawn_height = 0.65
     physics_dt = 0.005
