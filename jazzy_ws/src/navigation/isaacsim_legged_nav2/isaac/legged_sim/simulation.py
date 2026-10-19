@@ -38,7 +38,7 @@ class LeggedSimulation:
         self.spawn = (args.spawn[0], args.spawn[1], math.radians(args.spawn[2]))
 
         load_environment(app, self.stage, args.scene, args.deactivate, assets, args.floor_friction,
-                         args.open_stair_doors)
+                         args.stair_access)
         add_obstacle_boxes(self.stage, args.add_box, args.floor_z)
         SimulationManager.set_physics_sim_device(args.device)
         self.robot.spawn(*self.spawn, args.floor_z)

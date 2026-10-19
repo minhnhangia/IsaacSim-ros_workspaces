@@ -35,7 +35,7 @@ All simulator options: `~/isaacsim/python.sh isaac/legged_ros2_sim.py --help`. T
 | `--camera-rate HZ` | render and publish the cameras at this rate instead of every frame |
 | `--spawn X Y YAW_DEG` | spawn pose |
 | `--scene office\|grid\|FILE.usd` | environment |
-| `--[no-]open-stair-doors` | open the office's stairwell doors (default: for robots that climb stairs) |
+| `--[no-]stair-access` | make the office's stairwells reachable: open their doors, and give the real floors colliders in place of the ground plane that seals the flights down (default: for robots that climb stairs) |
 | `--view-offset FWD LEFT UP` | initial GUI camera relative to the robot |
 
 ## ROS 2 interface (namespace = robot name)

@@ -35,9 +35,9 @@ class FakeRobot:
 
 
 def test_robot_defaults_fill_only_unset_options():
-    args = apply_robot_defaults(parse_args(["--max-vx", "0.7", "--no-open-stair-doors"]), FakeRobot)
+    args = apply_robot_defaults(parse_args(["--max-vx", "0.7", "--no-stair-access"]), FakeRobot)
     assert args.max_vx == 0.7  # set on the command line: kept
     assert (args.min_vx, args.max_vy, args.max_wz) == (-0.5, 0.6, 0.9)
     assert args.min_cmd == [0.2, 0.2, 0.3] and args.lidar_mount == [0.1, 0.0, 0.2]
     assert args.deadband_comp is True and args.hold_heading is False
-    assert args.open_stair_doors is False and args.namespace == "fake"
+    assert args.stair_access is False and args.namespace == "fake"

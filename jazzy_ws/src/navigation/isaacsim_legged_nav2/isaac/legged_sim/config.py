@@ -32,8 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
     sim.add_argument("--floor-friction", type=float, default=1.0,
                      help="friction of the scene's own surfaces (they have no physics material otherwise, i.e. "
                           "0.5); combined by multiplication with the feet, as in Isaac Lab's training terrain")
-    sim.add_argument("--open-stair-doors", action=argparse.BooleanOptionalAction, default=None,
-                     help="open the stairwell doors (default: only for robots that climb stairs)")
+    sim.add_argument("--stair-access", action=argparse.BooleanOptionalAction, default=None,
+                     help="make the scene's stairwells reachable: open their doors, and replace a ground plane that "
+                          "seals the flights going down with the real floors (default: for robots that climb stairs)")
 
     ros = parser.add_argument_group("ROS 2 and sensors")
     ros.add_argument("--namespace", default=None, help="ROS namespace (default: the robot name)")
@@ -101,7 +102,7 @@ def apply_robot_defaults(args: argparse.Namespace, robot) -> argparse.Namespace:
     defaults = {"min_vx": profile.min_vx, "max_vx": profile.max_vx, "max_vy": profile.max_vy,
                 "max_wz": profile.max_wz, "min_cmd": list(profile.min_command),
                 "deadband_comp": profile.deadband_compensation, "hold_heading": profile.hold_heading,
-                "lidar_mount": list(robot.lidar_mount), "open_stair_doors": robot.climbs_stairs,
+                "lidar_mount": list(robot.lidar_mount), "stair_access": robot.climbs_stairs,
                 "namespace": robot.name}
     for name, value in defaults.items():
         if getattr(args, name) is None:
