@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Nav2 for a legged robot in Isaac Sim: ``ros2 launch isaacsim_legged_nav2 navigation.launch.py robot:=anymal_d map:=...``.
 
-Looks up the robot's footprint and self-filter ranges in params/robot_profiles.yaml and starts
+Looks up the robot's footprint, self-filter ranges and controller tuning in params/robot_profiles.yaml and starts
 nav2_stack.launch.xml with them. Every other argument is passed through to that file (launch
 configurations are shared with included files, so the defaults here must be real values).
 """
@@ -16,6 +16,7 @@ from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
 PACKAGE = "isaacsim_legged_nav2"
+TUNING = ("xy_goal_tolerance", "yaw_goal_tolerance", "min_approach_velocity", "rotate_to_heading_angular_vel")
 PASSED_THROUGH = ("map", "params_file", "use_sim_time", "rviz", "initial_x", "initial_y", "initial_yaw")
 
 
@@ -33,6 +34,7 @@ def include_stack(context):
     arguments = {"namespace": namespace, "footprint": f"'{profile['footprint']}'",
                  "scan_range_min": str(profile["scan_range_min"]),
                  "self_filter_range": str(profile["self_filter_range"])}
+    arguments.update({key: str(profile[key]) for key in TUNING})
     arguments.update({name: LaunchConfiguration(name).perform(context) for name in PASSED_THROUGH})
     stack = os.path.join(get_package_share_directory(PACKAGE), "launch", "nav2_stack.launch.xml")
     return [IncludeLaunchDescription(XMLLaunchDescriptionSource(stack), launch_arguments=arguments.items())]

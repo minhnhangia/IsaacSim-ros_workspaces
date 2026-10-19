@@ -1,7 +1,6 @@
 # Nav2 for a legged robot in Isaac Sim (legged_ros2_sim.py), Ouster OS0 on its back. Shared by all
-# robots: per-robot values (footprint, self-filter ranges) come from params/robot_profiles.yaml.
-# The controller and goal tolerances were tuned on Spot, the harder of the two (deadband, lag);
-# ANYmal-D tracks commands closely and needs none of the margins, but works with them.
+# robots: per-robot values (footprint, self-filter ranges, goal tolerances, controller speed floors)
+# come from params/robot_profiles.yaml.
 #
 # Frames: odom and base_footprint lie on the floor; base_link is the robot's body, which bobs and
 # tilts while walking. Everything Nav2 treats as "the robot" uses base_footprint, so every
@@ -99,14 +98,13 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      # A legged robot can't place itself as finely as a wheeled base: turning in place shifts
-      # Spot's body 0.1-0.25 m, and its policy ignores very small commands from a stand.
-      xy_goal_tolerance: 0.30
-      yaw_goal_tolerance: 0.35
-    # Regulated Pure Pursuit, not MPPI: measured on this robot, MPPI kept commanding ~0.5 m/s at
-    # 0.4 m from the goal and overshot by ~1 m every time (Spot responds with lag, and it ignores
-    # very small commands from a stand). RPP decelerates explicitly toward the goal, holds a speed
-    # floor above that deadband, and turns in place for the final heading.
+      # per robot (robot_profiles.yaml): Spot can't place itself finely, ANYmal-D can
+      xy_goal_tolerance: $(var xy_goal_tolerance)
+      yaw_goal_tolerance: $(var yaw_goal_tolerance)
+    # Regulated Pure Pursuit, not MPPI: measured on Spot, MPPI kept commanding ~0.5 m/s at 0.4 m
+    # from the goal and overshot by ~1 m every time (Spot responds with lag, and it ignores very
+    # small commands from a stand). RPP decelerates explicitly toward the goal, holds a per-robot
+    # speed floor (above Spot's deadband), and turns in place for the final heading.
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
       desired_linear_vel: 0.6
@@ -116,15 +114,16 @@ controller_server:
       lookahead_time: 1.5
       use_velocity_scaled_lookahead_dist: true
       transform_tolerance: 0.1
-      # Spot stands still for commands below ~0.22-0.3 m/s from a stand; stay above that.
-      min_approach_linear_velocity: 0.3
+      min_approach_linear_velocity: $(var min_approach_velocity)
       approach_velocity_scaling_dist: 1.0
       use_regulated_linear_velocity_scaling: true
       regulated_linear_scaling_min_radius: 0.9
+      # Floor in tight turns, for both robots: above Spot's deadband, and fast enough for the progress
+      # checker (0.5 m in 10 s) through doorways (ANYmal-D at 0.1 m/s here tripped it).
       regulated_linear_scaling_min_speed: 0.3
       use_cost_regulated_linear_velocity_scaling: false
       use_rotate_to_heading: true
-      rotate_to_heading_angular_vel: 0.5   # above the ~0.3 rad/s turning deadband
+      rotate_to_heading_angular_vel: $(var rotate_to_heading_angular_vel)
       rotate_to_heading_min_angle: 0.785
       max_angular_accel: 2.0
       allow_reversing: false

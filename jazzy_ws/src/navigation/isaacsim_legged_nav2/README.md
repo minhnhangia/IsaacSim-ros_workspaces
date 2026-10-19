@@ -62,25 +62,36 @@ Each of these fixes a measured problem; the details are in the docstrings of the
   policy, the ANYdrive LSTM actuator network, a 17x11 terrain height scan). The height scan comes from
   PhysX raycasts against the scene, i.e. ground-truth geometry standing in for an elevation map.
 - **Spot** (`robots/spot.py`, `commands.py`, `actuators.py`): small commands are scaled up from a stand
-  because its policy ignores them; with a zero command it holds the heading it stopped at; its
-  actuator model runs in one NumPy pass instead of Isaac's per-joint implementation (same torques).
-  ANYmal-D needs neither command fix.
+  because its policy ignores them (up to ~0.2 m/s, ~0.3 rad/s); with a zero command it holds the
+  heading it stopped at (it turns ~40° while settling); its actuator model runs in one NumPy pass
+  instead of Isaac's per-joint implementation (same torques).
+- **ANYmal-D's commands** (`robots/anymal_d.py`): it follows small linear commands and drifts only
+  1-7° after stopping, so it has no heading hold. It turns at only ~50-60% of 0.05-0.15 rad/s from a
+  stand, which stalled Nav2's turns in place, so small turn commands are scaled up to 0.2 rad/s.
 - **Commands** (`commands.py`): a watchdog stops the robot 0.5 s after the last `cmd_vel`; commands
   are clamped to each robot's trained range.
 - **Scene** (`scene.py`): physics rate and `--device` are set on every physics scene (a scene loaded
   from a file otherwise keeps its own: the office's 60 Hz and GPU dynamics). The office's surfaces get
   a physics material (friction 1.0, combined with the feet's), since without one PhysX uses 0.5 and
-  the policies slip. Its stairwell doors are opened for ANYmal-D.
-- **Sensors** (`sensors.py`): the OS0 sits on a 10 cm mast. Nav2's self-filters were measured at that
-  height per robot (`params/robot_profiles.yaml`); re-measure them if you change `--lidar-mount`.
-  NVIDIA's D455 asset is made visual-only, since as a rigid body it falls off the robot.
+  the policies slip. For ANYmal-D the stairwells are opened (`--stair-access`): their doors, and the
+  office's only ground-floor collider, an invisible infinite plane at z = 0 that also covers the flights
+  down to the basement, is replaced by colliders on the visible floor tiles (which have the stair openings).
+- **Sensors** (`sensors.py`, `mesh_probe.py`): mounts are placed by ray casts against the body's visual
+  mesh, not its bounding box (on ANYmal-D the box top is the rear LiDAR housing, 15 cm above the shell
+  under the mast): the OS0's mast stands on the highest point under its plate (10 cm on Spot, 15 cm on
+  ANYmal-D to clear that housing), and the D455 sits flush against the most protruding point of the
+  front face it covers. Nav2's self-filters were measured per robot with these mounts
+  (`params/robot_profiles.yaml`); re-measure them if you change `--lidar-mount`. NVIDIA's D455 asset is
+  made visual-only, since as a rigid body it falls off the robot.
 - **Point clouds and DDS** (`params/fastdds_large_messages.xml`): Nav2's costmaps subscribe best-effort,
   and with FastDDS's defaults they lost 20-60% of the clouds. `sim.launch.xml` gives the simulator this
   profile, after which all arrive. It works when Nav2 runs on the same machine; across a network
   consider `rmw_zenoh`. If you run `legged_ros2_sim.py` without the launch file, export
   `FASTRTPS_DEFAULT_PROFILES_FILE` to the profile yourself.
 - **Nav2** (`params/nav2.yaml`): one configuration for both robots. Regulated Pure Pursuit, because
-  MPPI overshot goals by ~1 m on Spot. The footprint and self-filters come from `robot_profiles.yaml`.
+  MPPI overshot goals by ~1 m on Spot. Per robot (`robot_profiles.yaml`): footprint, self-filters, goal
+  tolerances and the final-approach speed floor. Spot gets 0.30 m / 20° and 0.3 m/s (its deadband);
+  ANYmal-D 0.20 m / 11° and 0.15 m/s (tighter, 0.15 m / 9°, made it dither at a goal for 80 s).
 
 ## Code layout
 
@@ -92,7 +103,7 @@ Each of these fixes a measured problem; the details are in the docstrings of the
 | `simulation.py` | builds everything below and runs the frame loop |
 | `robots/` | `base.py` (the interface), `spot.py`, `anymal_d.py` |
 | `scene.py`, `physics_materials.py` | environment, doors, friction, physics settings |
-| `sensors.py`, `ros_graph.py` | OS0 and D455 mounting; the OmniGraph behind the topics above |
+| `sensors.py`, `mesh_probe.py`, `ros_graph.py` | OS0 and D455 mounting on the body's real surface; the OmniGraph behind the topics above |
 | `odometry.py`, `commands.py` | floor-aligned odometry; cmd_vel handling |
 | `rough_policy.py`, `networks.py`, `height_scanner.py` | rough-terrain observation and policy, NumPy networks, height scan |
 | `policy_assets.py` | exported weights (`~/.cache/isaacsim_legged_nav2/policies`), checked against torch on load |
@@ -114,7 +125,22 @@ Real-time factor in the office (Ryzen 9 9900X3D, RTX 5090, headless, all sensors
 
 ## Verified
 
-VERIFIED_PLACEHOLDER
+Office scene, headless, through `sim.launch.xml` and `navigation.launch.py`, for both robots:
+
+| | Spot | ANYmal-D |
+|---|---|---|
+| Five-goal tour (~52 m, through doorways) | 5/5, mean 0.25 m and 18° from goals | 5/5 twice, mean 0.16-0.19 m and 8° from goals |
+| AMCL vs ground truth (mean / max) | - | 6.6 cm / 22 cm |
+| Unmapped 0.6 m box across the route, both directions | 2/2, 0.38 m clear | 2/2, 0.44 m clear |
+| Office stairwell over `cmd_vel` (floor to 1.80 m landing / back down) | not capable | 3/3 up, 3/3 down |
+| Main staircase down to the basement's mid-landing (-1.5 m) over `cmd_vel` | not capable | 1/1 |
+
+Final position is measured against ground truth; the goal tolerance applies to AMCL's estimate.
+Final headings land near the yaw tolerance, because Regulated Pure Pursuit stops turning as soon as
+it is inside it. Before integration, the ANYmal-D policy was also evaluated in a test harness:
+10/10 runs up and down an 11-step flight of the office's dimensions at 0.5 and 1.0 m/s, and 5/5 up and
+5/5 down the real stairwell from randomized starts (G1 and H1 policies were compared the same way; Go2's
+is trained only on steps up to 0.12 m and never climbed the 0.15 m office steps).
 
 ## Limitations
 
@@ -125,3 +151,6 @@ VERIFIED_PLACEHOLDER
   simulation, a sim-to-real gap on hardware.
 - **Stairwells are narrow** (1.3 m in the office). ANYmal-D jammed against a wall when walked 0.15 m
   off the centreline; stairs must be approached centred.
+- **Carpet strips are 1 cm ledges** with `--stair-access` (ANYmal-D's default): the office's carpet paths
+  are raised overlays on the floor tiles, and once the floors have colliders a foot can catch on their
+  edge while turning in place (seen once in two tours; Nav2's progress checker recovered it).

@@ -51,11 +51,17 @@ class AnymalDRobot(LeggedRobot):
     physics_dt = 0.005
     control_dt = 0.02
     climbs_stairs = True
-    lidar_mount = (0.0, 0.0, 0.10)
-    # Trained on commands within +-1 m/s, +-1 rad/s. Measured from a settled stand: it follows even
-    # 0.05 m/s and 0.1 rad/s (no deadband) and holds its heading at rest (~6 deg settling drift).
-    commands = CommandProfile(min_vx=-1.0, max_vx=1.0, max_vy=0.8, max_wz=1.0, min_command=(0.0, 0.0, 0.0),
-                              deadband_compensation=False, hold_heading=False)
+    # Measured on the visual mesh: the shell top at the centre is z 0.084; the stock LiDAR housing at
+    # the rear reaches 0.19-0.23, so a 0.15 m mast keeps the OS0's view backward clear of it.
+    lidar_mount = (0.0, 0.0, 0.15)
+    camera_height = 0.02  # in the recess of the front face (z 0.00-0.04), where ANYmal's own camera sits
+    # Trained on commands within +-1 m/s, +-1 rad/s. Measured from a settled stand: it follows
+    # 0.05 m/s forward and 0.08 m/s sideways, but turns at only ~50-60% of 0.05-0.15 rad/s (fully at
+    # 0.2). Regulated Pure Pursuit limits each turn command to the measured rate plus 0.1 rad/s, so
+    # an unanswered 0.1 rad/s stalled turns in place on the office floor: compensate turning from a
+    # stand. Its heading drifts 1-7 deg in 5 s after stopping, inside the yaw tolerance: no hold.
+    commands = CommandProfile(min_vx=-1.0, max_vx=1.0, max_vy=0.8, max_wz=1.0, min_command=(0.05, 0.08, 0.20),
+                              deadband_compensation=True, hold_heading=False)
 
     def __init__(self):
         self._decimation = int(round(self.control_dt / self.physics_dt))

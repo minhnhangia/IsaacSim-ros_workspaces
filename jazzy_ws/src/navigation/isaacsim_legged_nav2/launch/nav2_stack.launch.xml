@@ -20,6 +20,10 @@
   <arg name="footprint" description="Polygon in base_footprint, e.g. '[[0.55, 0.25], [0.55, -0.25], ...]'"/>
   <arg name="scan_range_min" description="Self-filter: horizontal distance from base_footprint (flattened scan, AMCL)"/>
   <arg name="self_filter_range" description="Self-filter: 3D distance from the OS0 (costmap layers)"/>
+  <arg name="xy_goal_tolerance"/>
+  <arg name="yaw_goal_tolerance"/>
+  <arg name="min_approach_velocity" description="Regulated Pure Pursuit speed floor"/>
+  <arg name="rotate_to_heading_angular_vel"/>
   <arg name="scan_min_height" default="0.15" description="Scan slice, metres above the floor"/>
   <arg name="scan_max_height" default="1.5"/>
   <arg name="localization_scan_minimum_ranges" default="100"/>

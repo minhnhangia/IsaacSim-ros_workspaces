@@ -22,7 +22,7 @@ from .odometry import FloorOdometry
 from .robots import create_robot
 from .ros_graph import GraphConfig, RosGraph
 from .scene import add_obstacle_boxes, configure_physics_scenes, load_environment
-from .sensors import BodyBounds, mount_d455, mount_os0
+from .sensors import body_surface, mount_d455, mount_os0
 from .viewport import SnapshotRecorder, choose_view_offset, set_initial_view
 
 RTF_LOG_PERIOD = 10.0  # wall seconds
@@ -50,10 +50,11 @@ class LeggedSimulation:
         if not self.stage.GetPrimAtPath(body).IsValid():
             raise SystemExit(f"no body link at {body}")
         set_isaac_name_override(body, "base_link")
-        bounds = BodyBounds.of(self.stage, body)
-        lidar = None if args.no_lidar else mount_os0(app, self.stage, body, bounds, assets,
+        surface = body_surface(self.stage, body)
+        lidar = None if args.no_lidar else mount_os0(app, self.stage, body, surface, assets,
                                                      args.lidar_mount, args.lidar_config)
-        cameras = None if args.no_camera else mount_d455(app, self.stage, body, bounds, assets, args.camera_rate)
+        cameras = None if args.no_camera else mount_d455(app, self.stage, body, surface, assets,
+                                                         self.robot.camera_height, args.camera_rate)
         self.graph = RosGraph(GraphConfig(args.namespace, body, lidar, cameras, tuple(args.camera_resolution)))
 
         self.odometry = FloorOdometry(*self.spawn, args.floor_z)

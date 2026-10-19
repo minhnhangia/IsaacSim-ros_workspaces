@@ -15,6 +15,7 @@ class SpotRobot(LeggedRobot):
     spawn_height = 0.5
     climbs_stairs = False  # flat-terrain policy: stalls at a 15 cm step and can flip over
     lidar_mount = (0.0, 0.0, 0.10)
+    camera_height = 0.065  # near the top edge of the front face
     # Measured: from a settled stand the policy ignores vx <= 0.2, vy <= 0.15, wz <= 0.2-0.25, and it
     # turns ~40 deg while settling. Limits stay well inside the trained range (vx -2..3, vy +-1.5, wz +-2).
     commands = CommandProfile(min_vx=-1.0, max_vx=1.5, max_vy=0.8, max_wz=1.2, min_command=(0.30, 0.22, 0.32),

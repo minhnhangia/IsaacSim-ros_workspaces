@@ -34,7 +34,8 @@ class LeggedRobot(abc.ABC):
     physics_dt: float
     climbs_stairs: bool
     commands: CommandProfile
-    lidar_mount: tuple  # (x, y, mast height above the body's top surface)
+    lidar_mount: tuple  # (x, y, mast height above the body surface at that point)
+    camera_height: float  # centre of the front stereo camera on the body's front face (body frame z)
 
     @abc.abstractmethod
     def spawn(self, x: float, y: float, yaw: float, floor_z: float) -> None:

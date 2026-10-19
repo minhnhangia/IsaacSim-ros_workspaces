@@ -5,17 +5,32 @@
 #   distance from base_footprint below which points are the robot itself.
 # self_filter_range: self-filter for the costmaps' voxel layers: 3D distance from the OS0.
 # Both self-filters were measured from the robot's own OS0 points (>0.15 m above the floor)
-# while walking, with the OS0 on its default 0.10 m mast.
+# while walking, with the OS0 on the robot's default mast (robots/<robot>.py lidar_mount).
+# xy/yaw_goal_tolerance: the goal checker. min_approach_velocity: Regulated Pure Pursuit's speed
+#   floor on the final approach to a goal. rotate_to_heading_angular_vel: its turn-in-place rate.
 
 spot:
   # 1.1 m x 0.5 m. Own points: up to 0.52 m horizontally, 0.60 m from the sensor.
   footprint: "[[0.55, 0.25], [0.55, -0.25], [-0.55, -0.25], [-0.55, 0.25]]"
   scan_range_min: 0.6
   self_filter_range: 0.7
+  # Turning in place shifts Spot's body 0.1-0.25 m, and from a stand it ignores commands below
+  # ~0.22-0.3 m/s and ~0.3 rad/s: coarse tolerances, speed floors above that deadband.
+  xy_goal_tolerance: 0.30
+  yaw_goal_tolerance: 0.35
+  min_approach_velocity: 0.3
+  rotate_to_heading_angular_vel: 0.5
 
 anymal_d:
-  # 1.1 m x 0.74 m (feet at +-0.51 m, +-0.34 m). Own points: body to 0.50 m, swinging legs to
-  # 0.72 m horizontally; 0.82 m (99.9th percentile), 0.92 m (max) from the sensor.
+  # 1.1 m x 0.74 m (feet at +-0.51 m, +-0.34 m). OS0 on a 0.15 m mast (sensor base z 0.256 in the
+  # body frame). Own points: body 0.30-0.50 m, swinging legs to 0.72 m horizontally; within that,
+  # 0.76 m (99.9th percentile) from the sensor.
   footprint: "[[0.55, 0.37], [0.55, -0.37], [-0.55, -0.37], [-0.55, 0.37]]"
   scan_range_min: 0.75
-  self_filter_range: 0.9
+  self_filter_range: 0.8
+  # Places itself to ~0.1 m, but turning in place shifts it a few cm and overshoots the heading:
+  # at 0.15 m / 0.15 rad it dithered at a goal for 80 s.
+  xy_goal_tolerance: 0.20
+  yaw_goal_tolerance: 0.20
+  min_approach_velocity: 0.15
+  rotate_to_heading_angular_vel: 0.4
