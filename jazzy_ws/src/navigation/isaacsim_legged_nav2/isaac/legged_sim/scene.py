@@ -30,6 +30,7 @@ class ScenePreset:
     environment_prim: str  # root of the environment's own geometry (receives the floor material)
     deactivate: tuple = ()  # prims switched off by default
     stairs: StairAccess = StairAccess()
+    layers: tuple = ()  # extra layers over the scene file (in SCENES_DIR), strongest first
 
 
 SCENE_PRESETS = {
@@ -42,7 +43,10 @@ SCENE_PRESETS = {
                           stairs=StairAccess(doors=("/World/office/BP_PanicDoor4", "/World/office/BP_PanicDoor2_368",
                                                     "/World/office/BP_PanicDoor6"),
                                              ground_plane="/World/office/GroundPlane/CollisionPlane",
-                                             floor_prefix="SM_Floor")),
+                                             floor_prefix="SM_Floor"),
+                          # a first floor (scripts/build_office_floor.py): the ground floor's interior,
+                          # one storey up, reached by the main staircase
+                          layers=("office_floor1.usda",)),
 }
 
 
@@ -60,6 +64,11 @@ def load_environment(app, stage, scene: str, deactivate: str | None, assets_root
         raise SystemExit(f"scene not found: {preset.usd_file}")
     # A sublayer of the in-memory stage: nothing the simulator does is saved into the scene file.
     stage.GetRootLayer().subLayerPaths.append(preset.usd_file)
+    for layer in reversed(preset.layers):
+        path = os.path.join(SCENES_DIR, layer)
+        if not os.path.isfile(path):
+            raise SystemExit(f"scene layer not found: {path} (build it with scripts/build_office_floor.py)")
+        stage.GetRootLayer().subLayerPaths.insert(0, path)
     for _ in range(10):
         app.update()
     off = list(preset.deactivate) if deactivate is None else [p.strip() for p in deactivate.split(",") if p.strip()]
@@ -78,7 +87,7 @@ def load_environment(app, stage, scene: str, deactivate: str | None, assets_root
     environment = stage.GetPrimAtPath(preset.environment_prim)
     if environment.IsValid():
         bind_physics_material(environment, material)
-    log(f"scene: {preset.usd_file} (floor friction {floor_friction})")
+    log(f"scene: {preset.usd_file} + {list(preset.layers)} (floor friction {floor_friction})")
 
 
 def _collide_with_floors(stage, environment_prim: str, stairs: StairAccess) -> None:

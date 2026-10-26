@@ -84,6 +84,14 @@ Each of these fixes a measured problem; the details are in the docstrings of the
   the policies slip. For ANYmal-D the stairwells are opened (`--stair-access`): their doors, and the
   office's only ground-floor collider, an invisible infinite plane at z = 0 that also covers the flights
   down to the basement, is replaced by colliders on the visible floor tiles (which have the stair openings).
+- **First floor** (`scenes/office_floor1.usda`, built by `scripts/build_office_floor.py`): NVIDIA's office
+  has only a ground floor and a basement; its stair cores continue upward but the main one was sealed by
+  a wall (`Cube24`). The office scene loads this layer, which adds the ground floor's interior (rooms,
+  walls, furniture, floors with colliders, ceilings, lights) one storey up as a reference to
+  `/World/office`, removes the roof slabs under it, and starts `Cube24` one storey higher, so the main
+  staircase (`SM_StairsMain2`) arrives on the first floor. Neither `office.usd` nor
+  `dd100_office_navigation.usd` is modified; rebuild the layer with
+  `~/isaacsim/python.sh scripts/build_office_floor.py` after changing the scene.
 - **Sensors** (`sensors.py`, `mesh_probe.py`): mounts are placed by ray casts against the body's visual
   mesh, not its bounding box (on ANYmal-D the box top is the rear LiDAR housing, 15 cm above the shell
   under the mast): the OS0's mast stands on the highest point under its plate (10 cm on Spot, 15 cm on
@@ -120,7 +128,8 @@ Each of these fixes a measured problem; the details are in the docstrings of the
 
 Launch: `sim.launch.xml` (simulator), `navigation.launch.py` (picks the robot profile) →
 `nav2_stack.launch.xml` (the Nav2 stack). `scripts/export_policies.py` downloads NVIDIA's checkpoints
-and writes NumPy weights with torch reference outputs and SHA-256 hashes.
+and writes NumPy weights with torch reference outputs and SHA-256 hashes. `scripts/build_office_floor.py`
+(Isaac Sim's Python) generates the first-floor layer.
 
 The modules that do not import Isaac Sim are covered by unit tests:
 `colcon test --packages-select isaacsim_legged_nav2`, or `python3 -m pytest test`.
@@ -142,6 +151,7 @@ Office scene, headless, through `sim.launch.xml` and `navigation.launch.py`, for
 | Unmapped 0.6 m box across the route, both directions | 2/2, 0.38 m clear | 2/2, 0.44 m clear |
 | Office stairwell over `cmd_vel` (floor to 1.80 m landing / back down) | not capable | 3/3 up, 3/3 down |
 | Main staircase down to the basement's mid-landing (-1.5 m) over `cmd_vel`, with Nav2 running | not capable | 1/1: `map -> base_footprint` z followed 0.00, -0.44, -0.74, -1.49 m; `base_footprint -> base_link` stayed 0.51-0.65 m |
+| Main staircase up to the new first floor (z 3.3) over `cmd_vel`, both flights | not capable | 2/3 full climbs (~52 s); 3/3 for the second flight alone. One run froze on the second flight's half-landing (2.56 m); not reproduced in 5 later runs |
 
 Final position is measured against ground truth; the goal tolerance applies to AMCL's estimate.
 Final headings land near the yaw tolerance, because Regulated Pure Pursuit stops turning as soon as
@@ -157,6 +167,9 @@ is trained only on steps up to 0.12 m and never climbed the 0.15 m office steps)
   layout (the local costmap, built from the LiDAR, is still right). On the main floor's map the stairs
   are free space and the flight down to the basement looks like floor; keep Spot out of stairwells
   with a keepout zone.
+- **The first floor is a copy of the ground floor**, including its entrance and exterior glass, which open
+  onto a 3.3 m drop outside the building. The main staircase reaches it (tested); the small stair core
+  should too, through its upstairs door `BP_PanicDoor6`, which `--stair-access` opens (not tested).
 - **ANYmal-D's actuator network is ANYmal-C's** (NVIDIA publishes no ANYmal-D network); fine in
   simulation, a sim-to-real gap on hardware.
 - **Stairwells are narrow** (1.3 m in the office). ANYmal-D jammed against a wall when walked 0.15 m
