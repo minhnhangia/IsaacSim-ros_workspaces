@@ -28,6 +28,8 @@
   <arg name="yaw_goal_tolerance"/>
   <arg name="min_approach_velocity" description="Regulated Pure Pursuit speed floor"/>
   <arg name="rotate_to_heading_angular_vel"/>
+  <arg name="global_footprint_padding" description="Added to the footprint for planning"/>
+  <arg name="local_footprint_padding" description="Added to the footprint for control and collision checks"/>
   <arg name="scan_min_height" default="0.15" description="Scan slice, metres above the floor"/>
   <arg name="scan_max_height" default="1.5"/>
   <arg name="localization_scan_minimum_ranges" default="100"/>

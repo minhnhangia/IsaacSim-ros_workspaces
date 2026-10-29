@@ -16,7 +16,8 @@ from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
 PACKAGE = "isaacsim_legged_nav2"
-TUNING = ("xy_goal_tolerance", "yaw_goal_tolerance", "min_approach_velocity", "rotate_to_heading_angular_vel")
+TUNING = ("xy_goal_tolerance", "yaw_goal_tolerance", "min_approach_velocity", "rotate_to_heading_angular_vel",
+          "global_footprint_padding", "local_footprint_padding")
 PASSED_THROUGH = ("map", "localization", "params_file", "use_sim_time", "rviz", "initial_x", "initial_y", "initial_yaw")
 
 

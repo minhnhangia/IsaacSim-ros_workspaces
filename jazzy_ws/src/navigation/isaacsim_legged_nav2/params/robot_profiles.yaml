@@ -8,6 +8,8 @@
 # while walking, with the OS0 on the robot's default mast (robots/<robot>.py lidar_mount).
 # xy/yaw_goal_tolerance: the goal checker. min_approach_velocity: Regulated Pure Pursuit's speed
 #   floor on the final approach to a goal. rotate_to_heading_angular_vel: its turn-in-place rate.
+# global/local_footprint_padding: added around the footprint by the planner's and the controller's
+#   costmaps. The planner treats any gap narrower than 2 x (half-width + global padding) as closed.
 
 spot:
   # 1.1 m x 0.5 m. Own points: up to 0.52 m horizontally, 0.60 m from the sensor.
@@ -20,12 +22,17 @@ spot:
   yaw_goal_tolerance: 0.35
   min_approach_velocity: 0.3
   rotate_to_heading_angular_vel: 0.5
+  global_footprint_padding: 0.05
+  local_footprint_padding: 0.03
 
 anymal_d:
-  # 1.1 m x 0.74 m (feet at +-0.51 m, +-0.34 m). OS0 on a 0.15 m mast (sensor base z 0.256 in the
-  # body frame). Own points: body 0.30-0.50 m, swinging legs to 0.72 m horizontally; within that,
-  # 0.76 m (99.9th percentile) from the sensor.
-  footprint: "[[0.55, 0.37], [0.55, -0.37], [-0.55, -0.37], [-0.55, 0.37]]"
+  # 1.1 m x 0.68 m: exactly where its feet are (+-0.51 m, +-0.34 m). The office's narrow doors are
+  # 0.85-0.90 m, and the LiDAR sees their frames a little inside the map's walls: with a 0.74 m
+  # footprint and 0.05 m padding the planner needed 0.84 m and found every one closed (4 of 5 test
+  # doors unplannable, the 5th a 52 m detour). OS0 on a 0.15 m mast (sensor base z 0.256 in the body
+  # frame). Own points: body 0.30-0.50 m, swinging legs to 0.72 m horizontally; within that, 0.76 m
+  # (99.9th percentile) from the sensor.
+  footprint: "[[0.55, 0.34], [0.55, -0.34], [-0.55, -0.34], [-0.55, 0.34]]"
   scan_range_min: 0.75
   self_filter_range: 0.8
   # Places itself to ~0.1 m, but turning in place shifts it a few cm and overshoots the heading:
@@ -34,3 +41,5 @@ anymal_d:
   yaw_goal_tolerance: 0.20
   min_approach_velocity: 0.15
   rotate_to_heading_angular_vel: 0.4
+  global_footprint_padding: 0.02  # planner needs 0.72 m
+  local_footprint_padding: 0.0  # the footprint is already the feet's span; doors leave ~0.1 m a side

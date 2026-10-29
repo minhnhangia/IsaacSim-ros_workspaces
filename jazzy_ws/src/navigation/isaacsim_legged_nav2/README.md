@@ -105,9 +105,14 @@ Each of these fixes a measured problem; the details are in the docstrings of the
   consider `rmw_zenoh`. If you run `legged_ros2_sim.py` without the launch file, export
   `FASTRTPS_DEFAULT_PROFILES_FILE` to the profile yourself.
 - **Nav2** (`params/nav2.yaml`): one configuration for both robots. Regulated Pure Pursuit, because
-  MPPI overshot goals by ~1 m on Spot. Per robot (`robot_profiles.yaml`): footprint, self-filters, goal
-  tolerances and the final-approach speed floor. Spot gets 0.30 m / 20° and 0.3 m/s (its deadband);
-  ANYmal-D 0.20 m / 11° and 0.15 m/s (tighter, 0.15 m / 9°, made it dither at a goal for 80 s).
+  MPPI overshot goals by ~1 m on Spot. Per robot (`robot_profiles.yaml`): footprint, footprint padding,
+  self-filters, goal tolerances and the final-approach speed floor. Spot gets 0.30 m / 20° and 0.3 m/s
+  (its deadband); ANYmal-D 0.20 m / 11° and 0.15 m/s (at 0.15 m / 9° it dithered at a goal for 80 s).
+  ANYmal-D's footprint is its exact foot span
+  (0.68 m wide) with 0.02 m planning padding and none for control, and the local costmap has 2.5 cm
+  cells: the office's narrow doors are 0.88-0.94 m, and with a 0.74 m footprint, 0.05 m padding and
+  5 cm cells the LiDAR-marked door frames closed them to the planner and controller (4 of 5 test doors
+  failed, the 5th took a 52 m detour; now 5/5 go straight through).
 
 ## Code layout
 
