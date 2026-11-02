@@ -135,6 +135,11 @@ class AnymalDRobot(LeggedRobot):
         scan = height_scan_observation(position[2], self._scanner.hit_heights(*position, yaw))
         self._targets = self._policy.act(state, command, scan)
 
+    def teleport(self, x, y, z, yaw):
+        art = self._articulation
+        art.set_world_poses([[x, y, z]], [[math.cos(yaw / 2), 0.0, 0.0, math.sin(yaw / 2)]])
+        art.set_velocities([[0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0]])
+
     def world_pose(self):
         position, orientation = self._articulation.get_world_poses()
         return position.numpy().reshape(-1), orientation.numpy().reshape(-1)

@@ -54,5 +54,9 @@ class LeggedRobot(abc.ABC):
     def world_pose(self) -> tuple[np.ndarray, np.ndarray]:
         """Body position (x, y, z) and orientation (w, x, y, z) in the world."""
 
+    def teleport(self, x: float, y: float, z: float, yaw: float) -> None:
+        """Moves the body to (x, y, z) upright, facing yaw, at rest (reset() then restands it)."""
+        raise NotImplementedError(f"{self.name} cannot be teleported")
+
     def close(self) -> None:
         """Releases callbacks and resources."""

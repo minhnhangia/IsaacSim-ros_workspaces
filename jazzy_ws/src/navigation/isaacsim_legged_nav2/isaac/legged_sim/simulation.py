@@ -23,6 +23,7 @@ from .odometry import FloorOdometry
 from .robots import create_robot
 from .ros_graph import GraphConfig, RosGraph
 from .scene import add_obstacle_boxes, configure_physics_scenes, load_environment
+from .sim_control import SimControl
 from .sensors import body_surface, mount_d455, mount_os0
 from .viewport import SnapshotRecorder, choose_view_offset, set_initial_view
 
@@ -41,6 +42,9 @@ class LeggedSimulation:
         load_environment(app, self.stage, args.scene, args.deactivate, assets, args.floor_friction,
                          args.stair_access)
         add_obstacle_boxes(self.stage, args.add_box, args.floor_z)
+        if args.camera_light:  # the viewport's "Camera Light"; the stage lights alone leave the office dark
+            carb.settings.get_settings().set("/rtx/useViewLightingMode", True)
+            log("camera light on (/rtx/useViewLightingMode)")
         SimulationManager.set_physics_sim_device(args.device)
         self.robot.spawn(*self.spawn, args.floor_z)
         RenderingManager.set_dt(self.robot.control_dt)
@@ -64,9 +68,19 @@ class LeggedSimulation:
         self.command = np.zeros(3, dtype=np.float32)
         self.pose = (self.spawn[0], self.spawn[1], args.floor_z + self.robot.spawn_height, self.spawn[2])  # x, y, z, yaw
         self._restart_policy, self._policy_failed = True, False
+        self.control = SimControl(args.namespace)
 
     # -------------------------------------------------------------- physics callback (every physics step)
     def _on_physics_step(self, step_dt, context) -> None:
+        reset = self.control.take()
+        if reset is not None:  # stand up again at the requested pose; also clears a policy failure
+            try:
+                x, y, z, yaw = reset
+                self.robot.teleport(x, y, z + self.robot.spawn_height, yaw)
+                self.floor.height = z
+                self._restart_policy, self._policy_failed = True, False
+            except Exception as error:  # noqa: BLE001 - must not raise inside the physics callback
+                carb.log_error(f"legged_sim: reset failed: {error}")
         if self._policy_failed:
             return
         try:
@@ -117,16 +131,27 @@ class LeggedSimulation:
                     command_log.write(sim_time, self.graph.message_count(), linear, angular, self.command, self.pose,
                                       self.commands.stale)
                 rtf.tick(sim_time)
+                self.control.spin()
+                if self.control.status_due(sim_time):
+                    _, orientation = self.robot.world_pose()
+                    self.control.publish(sim_time, orientation, self.pose[2] - self.floor.height,
+                                         self._policy_failed, rtf.last)
                 if snapshots:
                     snapshots.update(sim_time, self.pose[0], self.pose[1], self.pose[3])
                 if args.duration and sim_time >= args.duration:
                     break
+        except BaseException as error:  # app.close() exits the process before a traceback prints
+            import traceback
+            log(f"frame loop failed: {error!r}\n{traceback.format_exc()}")
+            raise
         finally:
+            log(f"frame loop ended: app running {self.app.is_running()}, sim t {sim_time:.1f} s")
             if command_log:
                 command_log.close()
             timeline.stop()
             SimulationManager.deregister_callback(callback)
             self.robot.close()
+            self.control.close()
 
 
 class RealTimeFactor:
@@ -134,11 +159,13 @@ class RealTimeFactor:
 
     def __init__(self):
         self._wall, self._sim = time.time(), 0.0
+        self.last = 0.0
 
     def tick(self, sim_time: float) -> None:
         elapsed = time.time() - self._wall
         if elapsed >= RTF_LOG_PERIOD:
-            log(f"real-time factor {(sim_time - self._sim) / elapsed:.2f} (sim t {sim_time:.1f} s)")
+            self.last = (sim_time - self._sim) / elapsed
+            log(f"real-time factor {self.last:.2f} (sim t {sim_time:.1f} s)")
             self._wall, self._sim = time.time(), sim_time
 
 

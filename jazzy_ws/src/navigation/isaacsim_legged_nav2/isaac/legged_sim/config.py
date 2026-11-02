@@ -32,6 +32,10 @@ def build_parser() -> argparse.ArgumentParser:
     sim.add_argument("--floor-friction", type=float, default=1.0,
                      help="friction of the scene's own surfaces (they have no physics material otherwise, i.e. "
                           "0.5); combined by multiplication with the feet, as in Isaac Lab's training terrain")
+    sim.add_argument("--camera-light", action=argparse.BooleanOptionalAction, default=True,
+                     help="light the scene from the viewing camera (Kit's 'Camera Light', /rtx/useViewLightingMode)"
+                          " instead of only the stage lights, which leave the office dark; applies to the robot's"
+                          " cameras too")
     sim.add_argument("--stair-access", action=argparse.BooleanOptionalAction, default=None,
                      help="make the scene's stairwells reachable: open their doors, and replace a ground plane that "
                           "seals the flights going down with the real floors (default: for robots that climb stairs)")

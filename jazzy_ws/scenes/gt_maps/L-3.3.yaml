@@ -1,0 +1,7 @@
+image: L-3.3.pgm
+mode: trinary
+resolution: 0.05
+origin: [-28.075, -34.675, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
